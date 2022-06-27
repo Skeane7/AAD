@@ -45,7 +45,9 @@ int main() {
 	Number K{105};
 	Number t{1.0};
 	
-	Option<Number> Call{S0, r, y, sigma, K, t};
+//	EuropeanCall<double> Call{S0, r, y, sigma, K, t};
+	AsianCall<double> Call{100, 0.01, 0.00, 0.1, 105, 1.0};
+
 /*	
 	(Call.S0).putOnTape();
 	(Call.r).putOnTape();
@@ -54,12 +56,14 @@ int main() {
 	(Call.K).putOnTape();
 	(Call.t).putOnTape();
 */
+	const size_t N = 10000;
 	RNG generator{7065};
-
-	Call.simulate(generator, 100000, 255);
+	std::vector<std::vector<double>> paths = Call.simulate(generator, N);
+	std::cout << "test 1\n";
+	Call.payoff(paths, N);
 	Call.price();
 
-        (Call.payout).propagateToStart();
+        /*(Call.payout).propagateToStart();
 	auto Delta = (Call.S0).adjoint();
 	auto Vega = (Call.sigma).adjoint();
 	auto Rho = (Call.r).adjoint();
@@ -67,6 +71,6 @@ int main() {
 	std::cout << "Delta = " << Delta << std::endl;
 	std::cout << "Vega = "  << Vega  << std::endl;
 	std::cout << "Rho = "   << Rho   << std::endl;
-	std::cout << "Theta = " << Theta << std::endl; 
+	std::cout << "Theta = " << Theta << std::endl; */
         return 0;
 }

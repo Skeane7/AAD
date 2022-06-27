@@ -12,20 +12,20 @@ template<class T>
 class Option {
 public: 
 	/* @Brief Class constructor */
-	Option(T S, T R, T Y, T Sig, T Strike, T time);
+	Option(T _S, T _R, T _Y, T _Sig, T _Strike, T _time);
 	/* @Brief Function to calculate payoff, overwrite later */
-	virtual T payoff(T x);
+	//virtual void payoff(std::vector<std::vector<T>> paths, const size_t N);
 	/* @Brief Function to simulate using Monte Carlo, overwrite later */
-	virtual void simulate(RNG generator, const size_t Npaths, size_t Ndays);
+	virtual std::vector<std::vector<T>> simulate(RNG generator, const size_t N);
 	/* @Brief Function to print option price to screen */
 	void price();
-	
-	T S0; /* Spot price */
-	T r; /* Interest rate */
-	T y; /* Dividend rate */
-	T sigma; /* Volatility */
-	T K; /* Strike */
-	T t; /* Time */
+protected:	
+	const T s0; /* Spot price */
+	const T r; /* Interest rate */
+	const T y; /* Dividend rate */
+	const T sigma; /* Volatility */
+	const T k; /* Strike */
+	const T t; /* Time */
 	T payout; /* Payoff */
 };
 
@@ -34,16 +34,16 @@ template <class T>
 class EuropeanCall : public Option<T> {
 public:
 	/* @Brief Class constructor */
-	EuropeanCall(T S, T R, T Y, T Sig, T Strike, T time);
+	EuropeanCall(T _S, T _R, T _Y, T _Sig, T _Strike, T _time);
 	/* @Brief Overwriting payoff function */
-	T payoff(T x);
-	/* @Brief Overwriting function to simulate and price using MC */
-	void simulate(RNG generator, const size_t Npaths);
-
+	void payoff(std::vector<std::vector<T>> paths, const size_t N);
 };
-/*
-class AsianCall: public Option {
 
+template<class T>
+class AsianCall: public Option<T> {
+public:
+	/* @Brief Class constructor */
+	AsianCall(T _S, T _R, T _Y, T _Sig, T _Strike, T _time);
+	/* @Brief Overwriting payoff function */
+	void payoff(std::vector<std::vector<T>> paths, const size_t N);
 };
-*/
-

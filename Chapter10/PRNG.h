@@ -31,10 +31,13 @@ public:
 		return rngs;
 	}
 	/* @Brief Function to return a vector of vector of normal (0,1) RV */
-	//std::vector<std::vector<double>> gaussian(const size_t n, const size_t m){
-	//	std::vector<std::vector<double>> rngs(n, std::vector<double>(m));
-	//	for(auto i=0;i<
-	//	for_each
+	std::vector<std::vector<double>> gaussian(const size_t n, const size_t m){
+		std::vector<std::vector<double>> rngs(n, std::vector<double>(m));
+		for(auto i=0;i<n;++i){
+			for_each(rngs[i].begin(), rngs[i].end(), [&](double& a) { a=gaussian();});
+		}
+		return rngs;
+	}
 private:
 	gsl_rng* gen;
 };
