@@ -9,6 +9,9 @@ all: $(EXEC)
 Option.o: Option.cc Option.h
 	$(CXX) -c Option.cc $(CXXFLAGS)
 
+#EuroOption.o: EuroOption.cc EuroOption.h
+#	$(CXX) -c EuroOption.cc $(CXXFLAGS)
+
 main: main.cc AAD.h Option.o
 	$(CXX) -o main main.cc Option.o $(CXXFLAGS)
 

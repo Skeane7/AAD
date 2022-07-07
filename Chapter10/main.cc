@@ -5,6 +5,7 @@
 #include <iostream>
 #include "AAD.h"
 #include "Option.h"
+//#include "EuroOption.h"
 //#include "PRNG.h"
 
 size_t Node::numAdj = 1;
@@ -37,40 +38,43 @@ T f(T S0, T r, T y, T sigma, T K, T t) {
 
 
 int main() {
-		      /* S0,  r ,  y ,sigma,  K , t */
+
+        /* S0,  r ,  y ,sigma,  K , t */
 	Number S0{100};
 	Number r{0.01};
 	Number y{0.00};
 	Number sigma{0.1};
 	Number K{105};
-	Number t{1.0};
+	Number t{0.5};
+
+	/* Putting variables on tape */
+	S0.putOnTape();
+	r.putOnTape();
+	sigma.putOnTape();
+	K.putOnTape();
+	t.putOnTape();
 	
-//	EuropeanCall<double> Call{S0, r, y, sigma, K, t};
-	AsianCall<double> Call{100, 0.01, 0.00, 0.1, 105, 1.0};
+	/* Option constructor */
+	EuropeanCall<Number> Call{S0, r, y, sigma, K, t};
+	//Call.init();
+	//AsianCall<Number> Call{S0, r, y, sigma, K, t};
+	/* Mark tape to be able to rewind to */
+	globalTape.mark();
+	const size_t N = 100;//'000;
+	RNG generator{43121};
+	Call.pricer(generator, N, globalTape);
+        Call.variables();
+	(Call.payout).propagateToMark();
+	//(Call.payout).propagateMarkToStart();
 
-/*	
-	(Call.S0).putOnTape();
-	(Call.r).putOnTape();
-	(Call.y).putOnTape();
-	(Call.sigma).putOnTape();
-	(Call.K).putOnTape();
-	(Call.t).putOnTape();
-*/
-	const size_t N = 10000;
-	RNG generator{7065};
-	std::vector<std::vector<double>> paths = Call.simulate(generator, N);
-	std::cout << "test 1\n";
-	Call.payoff(paths, N);
-	Call.price();
-
-        /*(Call.payout).propagateToStart();
-	auto Delta = (Call.S0).adjoint();
+	std::cout << "Option price = " << Call.payout << "\n";
+	auto Delta = (Call.s0).adjoint();
 	auto Vega = (Call.sigma).adjoint();
 	auto Rho = (Call.r).adjoint();
 	auto Theta = (Call.t).adjoint();
 	std::cout << "Delta = " << Delta << std::endl;
 	std::cout << "Vega = "  << Vega  << std::endl;
 	std::cout << "Rho = "   << Rho   << std::endl;
-	std::cout << "Theta = " << Theta << std::endl; */
+	std::cout << "Theta = " << Theta << std::endl; 
         return 0;
 }

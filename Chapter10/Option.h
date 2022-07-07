@@ -13,20 +13,19 @@ class Option {
 public: 
 	/* @Brief Class constructor */
 	Option(T _S, T _R, T _Y, T _Sig, T _Strike, T _time);
-	/* @Brief Function to calculate payoff, overwrite later */
-	//virtual void payoff(std::vector<std::vector<T>> paths, const size_t N);
 	/* @Brief Function to simulate using Monte Carlo, overwrite later */
-	virtual std::vector<std::vector<T>> simulate(RNG generator, const size_t N);
-	/* @Brief Function to print option price to screen */
-	void price();
-protected:	
+	std::vector<T> simulate(RNG generator);
+	/* @Brief Function to print option price and other variables to screen */
+	void variables();
+	void tapeLoad();
+//protected:	
 	const T s0; /* Spot price */
 	const T r; /* Interest rate */
 	const T y; /* Dividend rate */
 	const T sigma; /* Volatility */
 	const T k; /* Strike */
-	const T t; /* Time */
-	T payout; /* Payoff */
+	T t; /* Time */
+	//T payout; /* Payoff */
 };
 
 
@@ -36,7 +35,11 @@ public:
 	/* @Brief Class constructor */
 	EuropeanCall(T _S, T _R, T _Y, T _Sig, T _Strike, T _time);
 	/* @Brief Overwriting payoff function */
-	void payoff(std::vector<std::vector<T>> paths, const size_t N);
+	//void payoff(std::vector<T> path);
+	void payoff(std::vector<T> path);
+	/* @Brief Function to price option */
+	void pricer(RNG generator, const size_t N, Tape tape);
+	T payout;
 };
 
 template<class T>
@@ -45,5 +48,8 @@ public:
 	/* @Brief Class constructor */
 	AsianCall(T _S, T _R, T _Y, T _Sig, T _Strike, T _time);
 	/* @Brief Overwriting payoff function */
-	void payoff(std::vector<std::vector<T>> paths, const size_t N);
+	void payoff(std::vector<T> path);
+	/* @Brief Function to price option */
+	void pricer(RNG generator, const size_t N);
+	T payout;
 };

@@ -16,94 +16,104 @@ template<typename T>
 Option<T>::Option(T _S, T _R, T _Y, T _Sig, T _Strike, T _time):
 			s0{_S}, r{_R},y{_Y}, sigma{_Sig}, k{_Strike}, t{_time}{
 		std::cout << "Option Construtor \n";
-		T payout{0};
+		//T payout{0};
 }
 
+
 template<typename T>
-void Option<T>::price()
+void Option<T>::variables()
 {
 	std::cout << "Spot Price = " << s0 << ", Interest rate (r) = " << r << ", Dividend Yield = " << y << "\n" << "Volatility = " << sigma << ", Strike Price = " << k << ", Time(years) = " << t << "\n";
-	std::cout << "Option price = " << payout << "\n";
+	//std::cout << "Option price = " << payout << "\n";
+}
+/*
+template<typename T>
+std::vector<double> Option<T>::simulate(RNG generator){
+        auto Ndays = t*255.;
+	double NdaysCount = double(Ndays);
+	std::vector<double> rngs = generator.gaussian(NdaysCount);
+        std::vector<double> path(255);
+        path[0] = 1.;
+        for(auto j=1;j<NdaysCount;++j){
+                path[j] = path[j-1]*(exp(this->r.value()/(255*this->t.value())) + this->sigma.value()*sqrt(1/(255*this->t.value()))*rngs[j]);
+        }
+        return path;
+}
+*/
+template<typename T>
+std::vector<T> Option<T>::simulate(RNG generator){
+        auto Ndays{t*255.};
+        std::vector<double> rngs = generator.gaussian(Ndays.value());
+        std::vector<T> path(int(Ndays.value()));
+	auto dt{this->r*this->t/Ndays.value()};
+	auto dx{this->sigma*sqrt(this->t/Ndays.value())};
+        path[0]=T{1};
+        for(auto j=1;j<int(Ndays.value());++j){
+                path[j]=path[j-1]*(exp(dt) + dx*rngs[j]);
+        }
+        return path;
 }
 
 
 template<typename T>
 EuropeanCall<T>::EuropeanCall(T _S, T _R, T _Y, T _Sig, T _Strike, T _time):
-	Option<T>{_S, _R, _Y, _Sig, _Strike, _time}{}
+	Option<T>{_S, _R, _Y, _Sig, _Strike, _time}, payout{0}{}
+
+template<typename T>
+void EuropeanCall<T>::payoff(std::vector<T> path){
+	this->payout += max((path.back()*this->s0)-this->k,T{0});
+}
+
+template<typename T>
+void EuropeanCall<T>::pricer(RNG generator, const size_t N, Tape tape){
+	std::vector<T> path;
+        for(auto i=0; i<N; ++i){	
+		tape.rewindToMark();
+		path = this->simulate(generator);
+                payoff(path);
+		payout.propagateMarkToStart();
+        }
+        this->payout /= (N*(exp(this->r*this->t)));
+}
+
+template<typename T>
+void Option<T>::tapeLoad(){
+	//(s0)->putOnTape();
+        //Call.r.putOnTape();
+        //Call.sigma.putOnTape();
+        //Call.k.putOnTape();
+        //Call.t.putOnTape();
+        //Call.payout.putOnTape();	
+}
 
 template<typename T>
 AsianCall<T>::AsianCall(T _S, T _R, T _Y, T _Sig, T _Strike, T _time):
-        Option<T>{_S, _R, _Y, _Sig, _Strike, _time}{}
+        Option<T>{_S, _R, _Y, _Sig, _Strike, _time}, payout{0}{}
 
-/*
 template<typename T>
-void Option<T>::simulate(RNG generator, const size_t Npaths){
-	auto rngs = generator.gaussian(Npaths);
-	T St;
-	for(auto z : rngs){
-	St = S0*exp((r-0.5*pow(sigma, 2))*t + sigma*sqrt(t)*z);
-	payout += payoff(St);
+void AsianCall<T>::payoff(std::vector<T> path){
+	T average{0};
+	for(auto& i: path){
+		average += i;
 	}
-	payout/=(Npaths*(1+r));
-}
-*/
-/*
-template<typename T>
-void Option<T>::simulate(RNG generator, const size_t Npaths1, size_t Ndays){
-	auto Ndays2 = Ndays*t.value();
-	auto rngs = generator.gaussian(Npaths1*Ndays2);
-	T St{0};
-	T power{0};
-	T deltaT = 1/(t*Ndays);
-	T x = (r-pow(sigma, 2)/2)*deltaT;
-	T sqrtDT = sigma*sqrt(deltaT);
-	for(auto i=0;i<Npaths1;++i){
-		for(auto day=0;day<Ndays2;++day){
-			power += x + rngs[i*Ndays2+day]*sqrtDT;
-			St += exp(power); 
-		}
-		power = 0;
-		St *= (S0*deltaT);
-		payout += payoff(St);
-		St = 0;
-	}
-	payout /= (Npaths1*(1+r));
-}
-*/
-template<typename T>
-std::vector<std::vector<T>> Option<T>::simulate(RNG generator, const size_t N){
-	auto Ndays = 255*t;
-	auto rngs = generator.gaussian(N, Ndays);
-	std::vector<std::vector<T>> paths(N, std::vector<T>(Ndays));
-	for(auto i=0;i<N;++i){
-		paths[i][0] = s0;
-		for(auto j=1;j<Ndays;++j){
-			paths[i][j] = paths[i][j-1]*(1 + this->r/Ndays + this->sigma*sqrt(1/Ndays)*rngs[i][j-1]);
-		}
-	}		
-	return paths;
+	//std::accumulate(path.begin(), path.end(), average);
+	average *= (this->s0/(255.*this->t.value()));
+        this->payout += max(average-(this->k),0.0);
 }
 
 template<typename T>
-void EuropeanCall<T>::payoff(std::vector<std::vector<T>> paths, const size_t N){
-	for(auto i=0;i<N;i++){
-		this->payout += max((paths[i].back())-(this->k),0.0);
-	}
-	this->payout /= (N*(1+this->r));
-}
-
-
-template<typename T>
-void AsianCall<T>::payoff(std::vector<std::vector<T>> paths, const size_t N){
-        T average{0};
-	for(auto i=0;i<N;++i){
-		average = std::accumulate(paths[i].begin(), paths[i].end(), 0);
-               	this->payout += max(average-(this->k),0.0);
-		average = 0;
+void AsianCall<T>::pricer(RNG generator, const size_t N){
+        std::vector<T> path;
+        for(auto i=0; i<N; ++i){
+                path = this->simulate(generator);
+                this->payoff(path);
         }
-        this->payout /= (N*255*(1+this->r));
+        this->payout /= (N*(exp(this->r*this->t)));
 }
 
-template class Option<double>;
-template class EuropeanCall<double>;
-template class AsianCall<double>;
+//template class Option<double>;
+//template class EuropeanCall<double>;
+//template class AsianCall<double>;
+template class Option<Number>;
+template class EuropeanCall<Number>;
+template class AsianCall<Number>;
