@@ -4,8 +4,8 @@
 #include <cmath>
 #include <iostream>
 #include "AAD.h"
-#include "Option.h"
-//#include "EuroOption.h"
+//#include "Option.h"
+#include "EuroOption.h"
 //#include "PRNG.h"
 
 size_t Node::numAdj = 1;
@@ -38,7 +38,7 @@ T f(T S0, T r, T y, T sigma, T K, T t) {
 
 
 int main() {
-
+	globalTape.clear();
         /* S0,  r ,  y ,sigma,  K , t */
 	Number S0{100};
 	Number r{0.01};
@@ -59,15 +59,21 @@ int main() {
 	//Call.init();
 	//AsianCall<Number> Call{S0, r, y, sigma, K, t};
 	/* Mark tape to be able to rewind to */
-	globalTape.mark();
 	const size_t N = 100;//'000;
 	RNG generator{43121};
-	Call.pricer(generator, N, globalTape);
-        Call.variables();
-	(Call.payout).propagateToMark();
-	//(Call.payout).propagateMarkToStart();
-
-	std::cout << "Option price = " << Call.payout << "\n";
+	Call.pricer(generator, 1, globalTape);
+	globalTape.mark();
+	for(auto i=0; i<N; ++i){
+		globalTape.rewindToMark();
+		Call.pricer(generator, 1, globalTape);
+		Call.result.propagateToMark();
+		Call.payout += Call.result.value();
+	}
+	Call.payout /= (N*exp(Call.r*Call.t));
+		Call.variables();
+	//(Call.payout).propagateToMark();
+	(Call.payout).propagateMarkToStart();
+	//Call.payout.propagateToStart();
 	auto Delta = (Call.s0).adjoint();
 	auto Vega = (Call.sigma).adjoint();
 	auto Rho = (Call.r).adjoint();

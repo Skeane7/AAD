@@ -12,7 +12,7 @@ public:
 	/* @Brief Function to load variables to tape */
         void tapeLoad();
 	/* @Brief Payoff function */
-	void payoff();
+	T payoff();
 	/* @Brief Function to price option */
 	void pricer(RNG generator, const size_t N, Tape tape);
 	/* @Brief Intialisation function */
@@ -25,6 +25,7 @@ public:
         const T k; /* Strike */
         const T t; /* Time */
         T payout; /* Payoff */
+	T result;
 	std::vector<T> path;
 	T dt;
 	T dx;

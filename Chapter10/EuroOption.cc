@@ -9,8 +9,12 @@ template<typename T>
 EuropeanCall<T>::EuropeanCall(T _S, T _R, T _Y, T _Sig, T _Strike, T _time):
                         s0{_S}, r{_R},y{_Y}, sigma{_Sig}, k{_Strike}, t{_time}{
                 std::cout << "Option Construtor \n";
-                T payout{0};
-		path.resize(int(t.value()*255));
+                payout = 0;
+		int Ndays = int(t.value()*255);
+		path.resize(Ndays);
+		rngs.resize(Ndays);
+		dt = r*t/Ndays;
+        	dx = sigma*sqrt(t/Ndays);
 }
 
 template<typename T>
@@ -34,28 +38,32 @@ void EuropeanCall<T>::init(){
 template<typename T>
 void EuropeanCall<T>::simulate(RNG generator){
         auto Ndays{t*255};
-        rngs = generator.gaussian(Ndays.value());
+        rngs = generator.gaussian(int(Ndays.value()));
         path[0]=T{1};
         for(auto j=1;j<int(Ndays.value());++j){
-                path[j]=path[j-1]*(exp(dt) + dx*rngs[j]);
+                path[j]=path[j-1]*(exp(dt) + dx*rngs[j-1]);
         }
 }
 
 template<typename T>
-void EuropeanCall<T>::payoff(){
-        payout += max((path.back()*s0)-k,T{0});
+T EuropeanCall<T>::payoff(){
+        return max((s0*path.back())-k,T{0});
 }
 
 
 template<typename T>
 void EuropeanCall<T>::pricer(RNG generator, const size_t N, Tape tape){
-        for(auto i=0; i<N; ++i){
-                tape.rewindToMark();
-                simulate(generator);
-                payoff();
-                payout.propagateMarkToStart();
+	for(auto i=0; i<N; ++i){
+                //globalTape.rewindToMark();
+		simulate(generator);
+                //T result = payoff();
+                //result.propagateToMark();
+		//payout += result.value();
+		result = payoff();
+		std::cout << "Delta = " << s0.adjoint() << "\n";
+		//payout.propagateToMark();
         }
-        payout /= (N*(exp(r*t)));
+        //payout /= (N*(exp(r*t)));
 }
 
 

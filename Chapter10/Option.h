@@ -25,7 +25,7 @@ public:
 	const T sigma; /* Volatility */
 	const T k; /* Strike */
 	T t; /* Time */
-	//T payout; /* Payoff */
+	//T payout; /* Payoff 
 };
 
 
@@ -35,11 +35,13 @@ public:
 	/* @Brief Class constructor */
 	EuropeanCall(T _S, T _R, T _Y, T _Sig, T _Strike, T _time);
 	/* @Brief Overwriting payoff function */
-	//void payoff(std::vector<T> path);
+	//void payofddf(std::vector<T> path);
 	void payoff(std::vector<T> path);
 	/* @Brief Function to price option */
 	void pricer(RNG generator, const size_t N, Tape tape);
 	T payout;
+	std::vector<T> path;
+	std::vector<double> rngs;
 };
 
 template<class T>
