@@ -14,16 +14,16 @@ public:
 	/* @Brief Payoff function */
 	T payoff();
 	/* @Brief Function to price option */
-	void pricer(RNG generator, const size_t N, Tape tape);
+	void pricer(RNG generator, const size_t N);
 	/* @Brief Intialisation function */
 	void init();
 //protected:
-        const T s0; /* Spot price */
-        const T r; /* Interest rate */
-        const T y; /* Dividend rate */
-        const T sigma; /* Volatility */
-        const T k; /* Strike */
-        const T t; /* Time */
+        T s0; /* Spot price */
+        T r; /* Interest rate */
+        T y; /* Dividend rate */
+        T sigma; /* Volatility */
+        T k; /* Strike */
+        T t; /* Time */
         T payout; /* Payoff */
 	T result;
 	std::vector<T> path;

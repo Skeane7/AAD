@@ -25,11 +25,9 @@ void EuropeanCall<T>::variables(){
 
 template<typename T>
 void EuropeanCall<T>::init(){
-	auto Ndays = t.value()*255;
-	path.resize(Ndays);
-	rngs.resize(Ndays);
-	dt = r*t/Ndays;
-        dx = sigma*sqrt(t/Ndays);
+	auto Ndays = t*255;
+	path.resize(Ndays.value());
+	rngs.resize(Ndays.value());
 	//dt.putOnTape();
 	//dx.putOnTape();	
 }
@@ -39,6 +37,8 @@ template<typename T>
 void EuropeanCall<T>::simulate(RNG generator){
         auto Ndays{t*255};
         rngs = generator.gaussian(int(Ndays.value()));
+	dt = r*t/Ndays.value();
+        dx = sigma*sqrt(t/Ndays.value());
         path[0]=T{1};
         for(auto j=1;j<int(Ndays.value());++j){
                 path[j]=path[j-1]*(exp(dt) + dx*rngs[j-1]);
@@ -52,18 +52,22 @@ T EuropeanCall<T>::payoff(){
 
 
 template<typename T>
-void EuropeanCall<T>::pricer(RNG generator, const size_t N, Tape tape){
+void EuropeanCall<T>::pricer(RNG generator, const size_t N){
 	for(auto i=0; i<N; ++i){
-                //globalTape.rewindToMark();
+		Number::tape->rewindToMark();
 		simulate(generator);
-                //T result = payoff();
-                //result.propagateToMark();
-		//payout += result.value();
-		result = payoff();
-		std::cout << "Delta = " << s0.adjoint() << "\n";
+		Number res = payoff();
+		res.propagateToMark();
+		payout += res;
 		//payout.propagateToMark();
+		//putOnTape(path.begin(), path.end());
+		//s0.putOnTape();
+		//result = payoff();
+		//payout += double(res);
+		//std::cout << "Delta = " << s0.adjoint() << "\n";
+		//Number::tape->propagateToMark();
         }
-        //payout /= (N*(exp(r*t)));
+        payout /= (N*(exp(r*t)));
 }
 
 

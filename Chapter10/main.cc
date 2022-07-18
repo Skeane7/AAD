@@ -38,7 +38,7 @@ T f(T S0, T r, T y, T sigma, T K, T t) {
 
 
 int main() {
-	globalTape.clear();
+	Number::tape->rewind();
         /* S0,  r ,  y ,sigma,  K , t */
 	Number S0{100};
 	Number r{0.01};
@@ -46,38 +46,33 @@ int main() {
 	Number sigma{0.1};
 	Number K{105};
 	Number t{0.5};
-
-	/* Putting variables on tape */
-	S0.putOnTape();
-	r.putOnTape();
-	sigma.putOnTape();
-	K.putOnTape();
-	t.putOnTape();
-	
 	/* Option constructor */
 	EuropeanCall<Number> Call{S0, r, y, sigma, K, t};
-	//Call.init();
-	//AsianCall<Number> Call{S0, r, y, sigma, K, t};
 	/* Mark tape to be able to rewind to */
-	const size_t N = 100;//'000;
+	const size_t N = 100000;//'000;
 	RNG generator{43121};
-	Call.pricer(generator, 1, globalTape);
-	globalTape.mark();
-	for(auto i=0; i<N; ++i){
-		globalTape.rewindToMark();
-		Call.pricer(generator, 1, globalTape);
-		Call.result.propagateToMark();
-		Call.payout += Call.result.value();
-	}
-	Call.payout /= (N*exp(Call.r*Call.t));
-		Call.variables();
-	//(Call.payout).propagateToMark();
-	(Call.payout).propagateMarkToStart();
-	//Call.payout.propagateToStart();
-	auto Delta = (Call.s0).adjoint();
-	auto Vega = (Call.sigma).adjoint();
-	auto Rho = (Call.r).adjoint();
-	auto Theta = (Call.t).adjoint();
+	/* Putting variables on tape */
+	Call.s0.putOnTape();
+        Call.r.putOnTape();
+        Call.sigma.putOnTape();
+        Call.k.putOnTape();
+        Call.t.putOnTape();
+	putOnTape(Call.path.begin(), Call.path.end());
+	/* Marking tape */
+	Number::tape->mark();
+	/* Pricing option */
+	Call.pricer(generator, N);
+	/* Printing data about option */
+	Call.variables();
+	/* Propagate mark to start */
+	//Number::tape->rewind();
+	//(Call.payout).propagateMarkToStart();
+	Number::propagateMarkToStart();
+	/* Print sensitivities */
+	auto Delta = (Call.s0).adjoint()/N;
+	auto Vega = (Call.sigma).adjoint()/N;
+	auto Rho = (Call.r).adjoint()/N;
+	auto Theta = (Call.t).adjoint()/N;
 	std::cout << "Delta = " << Delta << std::endl;
 	std::cout << "Vega = "  << Vega  << std::endl;
 	std::cout << "Rho = "   << Rho   << std::endl;
